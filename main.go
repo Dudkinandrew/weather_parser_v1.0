@@ -288,7 +288,11 @@ func main() {
 
 	if webStorage != nil {
 		// ПОРТ 8081 - используем другой порт, чтобы избежать конфликтов
-		webServer := web.NewServer(":8081", webStorage)
+		port := os.Getenv("PORT")
+		if port == "" {
+			port = "8081" // для локального запуска
+		}
+		webServer := web.NewServer(":"+port, webStorage)
 		go func() {
 			if err := webServer.Start(); err != nil {
 				log.Printf("⚠️ Ошибка веб-сервера: %v", err)
