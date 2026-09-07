@@ -2,12 +2,11 @@ package main
 
 import (
 	"Weather_Parser/internal/config"
-	"Weather_Parser/internal/display"
 	"Weather_Parser/internal/geolocation"
 	"Weather_Parser/internal/notify"
 	"Weather_Parser/internal/storage"
 	"Weather_Parser/internal/weather"
-	"Weather_Parser/internal/web" // 👈 ДОБАВЛЯЕМ ИМПОРТ
+	"Weather_Parser/internal/web"
 	"flag"
 	"fmt"
 	"log"
@@ -113,6 +112,16 @@ func checkAlerts(data map[string]interface{}, prevTemp float64, prevCondition st
 }
 
 // ============================================
+// СТРУКТУРА ДЛЯ ГОРОДОВ
+// ============================================
+
+type CityConfig struct {
+	Name string
+	Lat  float64
+	Lon  float64
+}
+
+// ============================================
 // ОСНОВНАЯ ФУНКЦИЯ
 // ============================================
 
@@ -205,13 +214,12 @@ func main() {
 	log.Println("========================================")
 
 	// ============================================
-	// 6. ОПРЕДЕЛЕНИЕ МЕСТОПОЛОЖЕНИЯ
+	// 6. ОПРЕДЕЛЕНИЕ МЕСТОПОЛОЖЕНИЯ (для основного города)
 	// ============================================
 	var lat, lon float64
 	var cityName string
 
 	if cfg.City != "" {
-		// Ручной режим: город указан в конфиге
 		coords, exists := weather.CityCoordinates[cfg.City]
 		if !exists {
 			log.Printf("⚠️ Город %s не найден в базе, используем Москву", cfg.City)
@@ -223,7 +231,6 @@ func main() {
 		lat, lon = coords[0], coords[1]
 		log.Printf("📍 Ручной режим: %s (%.4f, %.4f)", cityName, lat, lon)
 	} else if cfg.AutoDetect {
-		// Автоматическое определение по IP
 		log.Println("📍 Определяем местоположение по IP...")
 		city, latitude, longitude, err := geolocation.GetCityCoordinates()
 		if err != nil {
@@ -238,7 +245,6 @@ func main() {
 			log.Printf("✅ Определен город: %s (%.4f, %.4f)", cityName, lat, lon)
 		}
 	} else {
-		// Дефолтный город (Москва)
 		log.Println("ℹ️ Используем город по умолчанию: Москва")
 		lat, lon = 55.7558, 37.6173
 		cityName = "Moscow"
@@ -246,7 +252,20 @@ func main() {
 	cfg.City = cityName
 
 	// ============================================
-	// 7. ИНИЦИАЛИЗАЦИЯ ХРАНИЛИЩА
+	// 7. СПИСОК ГОРОДОВ ДЛЯ ПАРСИНГА
+	// ============================================
+	citiesToParse := []CityConfig{
+		{Name: "Volgograd", Lat: 48.7080, Lon: 44.5133},
+		{Name: "Moscow", Lat: 55.7558, Lon: 37.6173},
+		{Name: "Saint Petersburg", Lat: 59.9343, Lon: 30.3351},
+		{Name: "Sochi", Lat: 43.5855, Lon: 39.7231},
+		{Name: "Kazan", Lat: 55.8304, Lon: 49.0661},
+		{Name: "Novosibirsk", Lat: 55.0084, Lon: 82.9357},
+		{Name: "Yekaterinburg", Lat: 56.8389, Lon: 60.6057},
+	}
+
+	// ============================================
+	// 8. ИНИЦИАЛИЗАЦИЯ ХРАНИЛИЩА
 	// ============================================
 	var storageClient interface {
 		WriteWeather(data map[string]interface{}) error
@@ -275,11 +294,9 @@ func main() {
 	}
 
 	// ============================================
-	// 8. ЗАПУСК ВЕБ-СЕРВЕРА (НОВЫЙ БЛОК!)
+	// 9. ЗАПУСК ВЕБ-СЕРВЕРА
 	// ============================================
 	var webStorage web.StorageReader
-
-	// Приводим storageClient к нужному интерфейсу
 	if pgStorage, ok := storageClient.(*storage.PostgresStorage); ok {
 		webStorage = pgStorage
 	} else if csvStorage, ok := storageClient.(*storage.CSVStorage); ok {
@@ -287,10 +304,9 @@ func main() {
 	}
 
 	if webStorage != nil {
-		// ПОРТ 8081 - используем другой порт, чтобы избежать конфликтов
 		port := os.Getenv("PORT")
 		if port == "" {
-			port = "8081" // для локального запуска
+			port = "8081"
 		}
 		webServer := web.NewServer(":"+port, webStorage)
 		go func() {
@@ -298,20 +314,17 @@ func main() {
 				log.Printf("⚠️ Ошибка веб-сервера: %v", err)
 			}
 		}()
-		// Явно выводим сообщение о запуске
-		log.Println("🌐 Веб-интерфейс запущен на http://localhost:8081")
+		log.Printf("🌐 Веб-интерфейс запущен на http://localhost:%s", port)
 	} else {
-		log.Println("⚠️ Хранилище не поддерживает веб-интерфейс (не реализован интерфейс StorageReader)")
+		log.Println("⚠️ Хранилище не поддерживает веб-интерфейс")
 	}
 
 	// ============================================
-	// 9. ИНИЦИАЛИЗАЦИЯ TELEGRAM БОТА
+	// 10. ИНИЦИАЛИЗАЦИЯ TELEGRAM БОТА
 	// ============================================
 	var telegramBot *notify.TelegramBot
 	if cfg.TelegramEnabled && cfg.TelegramToken != "" && cfg.TelegramChatID != "" {
 		telegramBot = notify.NewTelegramBot(cfg.TelegramToken, cfg.TelegramChatID)
-
-		// Отправляем приветственное сообщение
 		if err := telegramBot.SendTestMessage(); err != nil {
 			log.Printf("⚠️ Не удалось отправить приветствие в Telegram: %v", err)
 			log.Println("💡 Проверьте интернет, VPN или прокси")
@@ -323,81 +336,43 @@ func main() {
 	}
 
 	// ============================================
-	// 10. ИНИЦИАЛИЗАЦИЯ КЛИЕНТА ПОГОДЫ
+	// 11. ИНИЦИАЛИЗАЦИЯ КЛИЕНТА ПОГОДЫ
 	// ============================================
 	weatherClient := weather.NewOpenMeteoClient()
 
-	log.Printf("🚀 Запуск парсера погоды для %s (%.4f, %.4f)", cityName, lat, lon)
+	log.Printf("🚀 Запуск парсера погоды для %d городов", len(citiesToParse))
 	log.Printf("📁 Данные будут сохранены в: %s", cfg.CSVPath)
 	log.Printf("⏱️ Интервал обновления: %v", cfg.Interval)
 
 	// ============================================
-	// 11. ОСНОВНОЙ ЦИКЛ
+	// 12. ФУНКЦИЯ ПАРСИНГА ВСЕХ ГОРОДОВ
 	// ============================================
-	var prevTemp float64
-	var prevCondition string
-	var firstRun = true
+	fetchAllCities := func() {
+		log.Printf("📡 Запрашиваем погоду для %d городов...", len(citiesToParse))
 
-	// Функция получения и сохранения погоды
-	fetchAndSave := func() {
-		log.Println("📡 Запрашиваем погоду...")
-
-		// Получаем погоду
-		data, err := weatherClient.GetCurrentWeather(lat, lon)
-		if err != nil {
-			log.Printf("❌ Ошибка получения погоды: %v", err)
-			return
-		}
-
-		// Добавляем название города
-		data["city"] = cityName
-
-		// Выводим в консоль
-		display.PrintWeather(data)
-
-		// Извлекаем данные для логирования
-		temp := data["temp_c"].(float64)
-		condition := data["condition"].(string)
-
-		// Сохраняем в хранилище
-		if err := storageClient.WriteWeather(data); err != nil {
-			log.Printf("❌ Ошибка сохранения: %v", err)
-		} else {
-			log.Printf("✅ Данные сохранены: %.1f°C, %s", temp, condition)
-		}
-
-		// ============================================
-		// 12. ОТПРАВКА В TELEGRAM
-		// ============================================
-		if cfg.TelegramEnabled && telegramBot != nil {
-			// Отправляем текущую погоду
-			if err := telegramBot.SendWeather(data); err != nil {
-				log.Printf("⚠️ Ошибка отправки в Telegram: %v", err)
-			} else {
-				log.Println("📱 Погода отправлена в Telegram")
+		for _, city := range citiesToParse {
+			data, err := weatherClient.GetCurrentWeather(city.Lat, city.Lon)
+			if err != nil {
+				log.Printf("   ❌ Ошибка для %s: %v", city.Name, err)
+				continue
 			}
 
-			// Отправляем алерты (кроме первого запуска)
-			if !firstRun {
-				alerts := checkAlerts(data, prevTemp, prevCondition)
-				for _, alert := range alerts {
-					if err := telegramBot.SendAlert(alert); err != nil {
-						log.Printf("⚠️ Ошибка отправки алерта: %v", err)
-					} else {
-						log.Printf("📱 Алерт отправлен: %s", alert)
-					}
-				}
-			}
+			data["city"] = city.Name
 
-			// Обновляем предыдущие значения
-			prevTemp = temp
-			prevCondition = condition
-			firstRun = false
+			temp := data["temp_c"].(float64)
+			condition := data["condition"].(string)
+			log.Printf("   🌍 %s: %.1f°C, %s", city.Name, temp, condition)
+
+			if err := storageClient.WriteWeather(data); err != nil {
+				log.Printf("   ❌ Ошибка сохранения для %s: %v", city.Name, err)
+			}
 		}
+
+		log.Println("✅ Парсинг всех городов завершен")
 	}
 
 	// Первый запуск
-	fetchAndSave()
+	fetchAllCities()
 
 	// Таймер для периодического выполнения
 	ticker := time.NewTicker(cfg.Interval)
@@ -412,9 +387,8 @@ func main() {
 		for {
 			select {
 			case <-ticker.C:
-				fetchAndSave()
+				fetchAllCities()
 			case <-quit:
-				// Отправляем сообщение о завершении
 				if cfg.TelegramEnabled && telegramBot != nil {
 					if err := telegramBot.SendMessage("🛑 <b>Погодный монитор остановлен</b>"); err != nil {
 						log.Printf("⚠️ Ошибка отправки сообщения о остановке: %v", err)

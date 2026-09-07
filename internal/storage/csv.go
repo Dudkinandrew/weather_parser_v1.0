@@ -20,7 +20,6 @@ func NewCSVStorage(filePath string) *CSVStorage {
 	}
 }
 
-// GetLatest возвращает последнюю запись для указанного города
 func (s *CSVStorage) GetLatest(city string) (map[string]interface{}, error) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
@@ -38,10 +37,10 @@ func (s *CSVStorage) GetLatest(city string) (map[string]interface{}, error) {
 	}
 
 	if len(records) < 2 {
-		return nil, nil // нет данных
+		return nil, nil
 	}
 
-	// Идём с конца, чтобы найти последнюю запись для города
+	// Идем с конца — ищем последнюю запись для указанного города
 	for i := len(records) - 1; i >= 1; i-- {
 		record := records[i]
 		if len(record) < 9 {
