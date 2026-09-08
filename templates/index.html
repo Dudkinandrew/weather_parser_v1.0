@@ -133,13 +133,11 @@
         <div class="city-selector">
             <label for="citySelect">📍 Город:</label>
             <select id="citySelect" onchange="changeCity()">
-                <option value="Volgograd">Волгоград</option>
-                <option value="Moscow">Москва</option>
-                <option value="Saint Petersburg">Санкт-Петербург</option>
-                <option value="Sochi">Сочи</option>
-                <option value="Kazan">Казань</option>
-                <option value="Novosibirsk">Новосибирск</option>
-                <option value="Yekaterinburg">Екатеринбург</option>
+                <option value="Волгоград">Волгоград</option>
+                <option value="Петров Вал">Петров вал</option>
+                <option value="Суводская">Суводская</option>
+                <option value="Прохладный">Прохладный</option>
+                <option value="Терскол">Терскол</option>
             </select>
         </div>
         <button class="btn" onclick="updateWeather()">🔄 Обновить сейчас</button>
@@ -237,7 +235,7 @@
                         </div>
                         <div>
                             <div class="detail-label">💨 Ветер</div>
-                            <div class="detail-value">` + (data.wind_kph || '--') + ` км/ч</div>
+                            <div class="detail-value">` + (data.wind_kph || '--') + ` м/с</div>
                         </div>
                         <div>
                             <div class="detail-label">🌡️ Макс/Мин</div>

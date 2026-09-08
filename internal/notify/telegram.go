@@ -104,7 +104,7 @@ func (t *TelegramBot) SendWeather(data map[string]interface{}) error {
 %s <b>%.1f°C</b>
 %s <b>%s</b>
 💧 Влажность: <b>%d%%</b>
-💨 Ветер: <b>%.1f км/ч</b>
+💨 Ветер: <b>%.1f м/с</b>
 🕐 %s
 
 #погода #%s`,

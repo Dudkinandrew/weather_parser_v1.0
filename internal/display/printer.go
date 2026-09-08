@@ -41,7 +41,7 @@ func PrintWeather(data map[string]interface{}) {
 		ColorWhite, ColorPurple, condition, ColorReset)
 	fmt.Printf("%s💧 Влажность: %s%d%%%s\n",
 		ColorWhite, ColorBlue, humidity, ColorReset)
-	fmt.Printf("%s💨 Ветер: %s%.1f км/ч%s\n",
+	fmt.Printf("%s💨 Ветер: %s%.1f м/с%s\n",
 		ColorWhite, ColorCyan, wind, ColorReset)
 	fmt.Println(strings.Repeat("─", 40))
 }

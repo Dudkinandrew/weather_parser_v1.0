@@ -255,13 +255,11 @@ func main() {
 	// 7. СПИСОК ГОРОДОВ ДЛЯ ПАРСИНГА
 	// ============================================
 	citiesToParse := []CityConfig{
-		{Name: "Volgograd", Lat: 48.7080, Lon: 44.5133},
-		{Name: "Moscow", Lat: 55.7558, Lon: 37.6173},
-		{Name: "Saint Petersburg", Lat: 59.9343, Lon: 30.3351},
-		{Name: "Sochi", Lat: 43.5855, Lon: 39.7231},
-		{Name: "Kazan", Lat: 55.8304, Lon: 49.0661},
-		{Name: "Novosibirsk", Lat: 55.0084, Lon: 82.9357},
-		{Name: "Yekaterinburg", Lat: 56.8389, Lon: 60.6057},
+		{Name: "Волгоград", Lat: 48.7080, Lon: 44.5133},
+		{Name: "Петров Вал", Lat: 50.1396, Lon: 45.2142},
+		{Name: "Суводская", Lat: 49.4875, Lon: 45.0514},
+		{Name: "Прохладный", Lat: 43.759, Lon: 44.011},
+		{Name: "Терскол", Lat: 43.2573, Lon: 42.5082},
 	}
 
 	// ============================================
