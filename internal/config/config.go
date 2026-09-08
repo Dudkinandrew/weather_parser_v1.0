@@ -32,7 +32,7 @@ func DefaultConfig() Config {
 		CSVPath:    "weather_data.csv",
 		AutoDetect: true,
 
-		TelegramEnabled: false,
+		TelegramEnabled: true,
 		TelegramToken:   "",
 		TelegramChatID:  "",
 
